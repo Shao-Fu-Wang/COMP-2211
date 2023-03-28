@@ -16,7 +16,7 @@ class KNNModel:
   def compute_Minkowski_distance(self, test_dataset):
     # TODO
     difference = self.train_dataset - test_dataset[:,np.newaxis,:]
-    dist = np.power(np.sum(np.power(difference, self.p), axis = 2), (1/self.p))
+    dist = np.sum(abs(difference**self.p), axis = 2)**(1/self.p)
     return dist
 
   def find_k_nearest_neighbor_labels(self, test_dataset):
@@ -29,7 +29,6 @@ class KNNModel:
     # TODO
     test_predict, _ = stats.mode(self.find_k_nearest_neighbor_labels(test_dataset), axis=1, keepdims = False)
     return test_predict # return test_predict # shape: (num_test_samples, )
-
 
 def generate_confusion_matrix(test_predict, test_labels):
   # TODO
@@ -80,7 +79,6 @@ def calculate_MCC_score(test_predict, test_labels):
   MCC_score = (part_a - part_b)/np.sqrt(part_c * part_d)
   return MCC_score 
 
-
 class DFoldCV:
   def __init__(self, X, y, k_list, p_list, d, eval_metric):
     self.X = X
@@ -106,8 +104,10 @@ class DFoldCV:
       for p_idx, p in enumerate(self.p_list):
           knn_model = KNNModel(k, p)
           for fold in range(self.d):
-            X_train, y_train = train_d_folds[fold][:, :-1], train_d_folds[fold][:, -1]  # last one is label
-            X_test, y_test = test_d_folds[fold][:, :-1], test_d_folds[fold][:, -1]  # last one is label
+            X_train = train_d_folds[fold][:, : -1]  # last one is label
+            y_train = train_d_folds[fold][:, -1]
+            X_test = test_d_folds[fold][:, : -1]
+            y_test = test_d_folds[fold][:, -1] 
             knn_model.fit(X_train, y_train)
             scores[k_idx, p_idx, fold] = self.eval_metric(knn_model.predict(X_test), y_test)
     return scores
@@ -120,7 +120,6 @@ class DFoldCV:
     # print("idx max: ", idx_max)
     k_best, p_best = self.k_list[idx_max[0]], self.p_list[idx_max[1]]
     return k_best, p_best # type: tuple
-
 
 ### The following part can be deleted or be uncommented. Deleting or commenting out them would be the easiest way.
 ### If you do not want to comment them out, make sure all other codes are under the indent of if __name__ == '__main__'.
