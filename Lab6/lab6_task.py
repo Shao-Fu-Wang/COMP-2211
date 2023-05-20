@@ -8,7 +8,7 @@ import os
 from keras.preprocessing.text import one_hot
 from keras_preprocessing.sequence import pad_sequences
 from keras.models import Sequential
-from keras.layers import Embedding, Flatten
+from keras.layers import Embedding, Flatten, Bidirectional, LSTM
 from keras.layers.core import Activation, Dropout, Dense
 
 import nltk
@@ -57,20 +57,21 @@ def Preprocess(data, max_length, vocab_size, test_rate):
 
   # TODO
   # Step 2: Process the text data in data['processed_text'] and data['negativereason'].
-  # Hint 1: Please use the function process_text(text) in the above code cell to process the text data.
-  # Hint 2: You may use Pandas's DataFrame.apply() function.
+  # Hint 1: data['processed_text'] is processed from data['text']. data['negativereason'] is processed from data['negativereason'].
+  # Hint 2: Please use the function process_text(text) in the above code cell to process the text data.
+  # Hint 3: You may use Pandas's DataFrame.apply() function.
   # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.apply.html
-  data['processed_text'] = 
-  data['negativereason'] = 
+  data['processed_text'] = data['text'].apply(process_text)
+  data['negativereason'] = data['negativereason'].apply(process_text)
 
   # TODO
-  # Step 3: Create a new column for data, where each entry of data['final_text'] is concatenated by the corresponding contents in data['processed_text'] and data['negativereason'], separated with one blank ' '.
-  data['final_text'] = 
+  # Step 3: Create a new column for data, where each entry of data['final_text'] is produced by concatenation of the corresponding contents in data['processed_text'] and data['negativereason'], separated with one blank ' '.
+  data['final_text'] = data['processed_text'] + ' ' + data['negativereason']
 
   # TODO
   # Step 4: Tokenize data['final_text']. X should be a Numpy 2D array with shape (num_data, max_length).
   # Hint: Please use the function tokenized(text, max_length, vocab_size) in the above cell to tokenize the final text data.
-  X = 
+  X = tokenized(data['final_text'], max_length, vocab_size)
   
   # TODO
   # Step 5: Get a new DataFrame that records the labels for the data samples. 
@@ -79,7 +80,7 @@ def Preprocess(data, max_length, vocab_size, test_rate):
   # Hint 1: Please get y from data['airline_sentiment'].
   # Hint 2: You may use Pandas's get_dummies() function.
   # https://pandas.pydata.org/docs/reference/api/pandas.get_dummies.html
-  y = 
+  y = pd.get_dummies(data['airline_sentiment'])
 
   # Step 6: Split X and y to training and testing datasets.
   X_train,X_test,y_train, y_test = train_test_split(X, y, test_size=test_rate, random_state=42)
@@ -93,6 +94,17 @@ def myModel(vocab_size, maxlen, embed_dim):
   # TODO: Please construct your MLP model. You can try different settings on your own.
   # Remark: Your model will be trained with 10 epochs under the same training setting as the notebook (e.g. the same training set, training epochs, optimizer etc.) for evaluation.
   
+  # model.add(Dense(units=15, kernel_initializer='GlorotUniform', activation='leaky_relu'))
+  # model.add(Dropout(0.76))
+  # model.add(Dense(units=8, kernel_initializer='GlorotUniform', activation='leaky_relu'))
+
+  # model.add(Dense(units=6,kernel_initializer='GlorotUniform', activation='leaky_relu'))
+  # model.add(Dropout(0.76))
+  model.add(Bidirectional(LSTM(21)))
+  model.add(Dropout(0.69))
+  
+  model.add(Flatten())
+  model.add(Dense(3, activation='softmax'))    
 
 
   return model
